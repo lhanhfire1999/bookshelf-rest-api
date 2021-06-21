@@ -10,5 +10,5 @@ const config = {
   }
 }
 
-export const knex = require("knex")(config);
+const knex = require("knex")(config);
 export const bookshelf = require("bookshelf")(knex);

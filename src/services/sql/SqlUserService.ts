@@ -1,79 +1,67 @@
-import {User} from '../../models/User';
-import {Pool} from 'pg';
-
-export const pool = new Pool ({
-  user:'postgres',
-  host: 'localhost',
-  password: '123',
-  database: 'master-data',
-  port: 5432
-}); 
+import {User, userModel} from '../../models/User';
 
 export class SqlUserService {
   constructor() {
   }
   all(): Promise<User[]> {
     return new Promise<User[]>((resolve, reject) => {
-      pool.query('SELECT * FROM users ORDER BY id ASC', (err, results) => {
-        if (err) {
-          return reject(err);
-        }
-        else{
-          return resolve(results.rows as any);
-        }
-      })
+      try{
+        const users =  new userModel().fetchAll();
+        resolve(users);
+      }
+      catch(err){
+        reject(err);
+      }
     });
   }
   load(id: string): Promise<User> {
     return new Promise<User>((resolve, reject) => {
-      pool.query('SELECT * FROM users WHERE id = $1', 
-      [id],  (err, results) => {
-        if (err) {
-          return reject(err);
-        }
-        else{
-          return resolve(results.rows as any);
-        }
-      })
+      try{
+        const user = userModel.where("id", id).fetch();
+        resolve(user);
+      }
+      catch(err){
+        reject(err);
+      }
     });
   }
   insert(user: User): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      pool.query('INSERT INTO users (id, username, email, phone, "dateOfBirth") VALUES ($1, $2, $3, $4, $5)', 
-      [user.id, user.username, user.email, user.phone, user.dateOfBirth],  (err, results) => {
-        if (err) {
-          return reject(err);
-        }
-        else{
-          return resolve(results.rowCount);
-        }
-      })
+      try{
+        const data =  userModel.forge({...user})
+        .save(null, {method: 'insert'})
+        resolve(data);
+      }
+      catch(err){
+        reject(err);
+      }
     });
   }
   update(user: User): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      pool.query('UPDATE users SET username=$2, email=$3, phone=$4, "dateOfBirth"= $5 WHERE id = $1', 
-      [user.id, user.username, user.email, user.phone, user.dateOfBirth],  (err, results) => {
-        if (err) {
-          return reject(err);
-        }
-        else{
-          return resolve(results.rowCount);
-        }
-      })
+      const {id, username, email, phone, dateOfBirth} = user;
+      try{
+        const data =  userModel.where("id", id)
+        .save(
+          { username, email, phone, dateOfBirth },
+          { patch: true }
+        );
+        resolve(data);
+      }
+      catch(err){
+        reject(err);
+      }
     });
   }
   delete(id: string): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      pool.query('DELETE FROM users WHERE id = $1', 
-      [id],  (err, results) => {
-        if (err) {
-          return reject(err);
-        }
-        else{
-          return resolve(results.rowCount);
-        }
-      })
+      try{
+        const user =  userModel.where("id", id).destroy();
+        resolve(user);
+      }
+      catch(err){
+        reject(err);
+      }
     });
   }
 }
